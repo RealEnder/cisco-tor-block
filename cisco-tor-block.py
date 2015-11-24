@@ -143,7 +143,8 @@ class CiscoTorBlock():
         # extract all IP addresses
         ipPattern = re.compile("\d+ permit ip host \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} any")
         findIP = re.findall(ipPattern, cisco_list)
-        print "Rules found: %d" % len(findIP)
+        rulesLen = len(findIP)
+        print "Rules found: %d" % rulesLen
 
         pair = dict()
         spair = set()
@@ -159,6 +160,12 @@ class CiscoTorBlock():
             todelno.add(pair[todelip])
 
         print "Rules to add: %d\nRules to remove: %d" % (len(toadd), len(todelno))
+
+        # Check if we have to remove more than 40% of rules
+        if rulesLen != 0:
+            if len(todelno) / rulesLen * 1.0 > 0.4:
+                print "Too many rules to remove! Check the exit node list URL."
+                exit(1)
 
         return toadd, todelno
 
