@@ -144,17 +144,16 @@ class CiscoTorBlock():
             return [aa for aa in a if aa not in b]
 
         # extract all IP addresses
-        ipPattern = re.compile("\d+ permit ip host \d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} any")
+        ipPattern = re.compile("(\d+) permit ip host (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) any")
         findIP = re.findall(ipPattern, cisco_list)
         rulesLen = len(findIP)
         print "Rules found: %d" % rulesLen
 
         pair = dict()
         spair = set()
-        for line in findIP:
-            l = line.split(" ")
-            pair[l[4]] = l[0]
-            spair.add(l[4])
+        for p in findIP:
+            pair[p[1]] = p[0]
+            spair.add(p[1])
 
         todel = set(diff(spair, torlist))
         toadd = set(diff(torlist, spair))
