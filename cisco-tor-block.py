@@ -52,8 +52,11 @@ class CiscoTorBlock():
     conf = None
     ea_list = None
 
-    def __init__(self, c):
+    def __init__(self, c=None):
         self.conf = c
+
+    def run(self):
+        """ Main routine """
         self.get_ea(self.conf["ea_url"])
         iplist = self.parse_ea_list()
         self.push_cisco(iplist)
@@ -246,3 +249,4 @@ class CiscoTorBlock():
 if __name__ == "__main__":
     print "cisco-tor-block v%s Copyright (C) 2015 Alex Stanev" % VER
     ctb = CiscoTorBlock(config)
+    ctb.run()
