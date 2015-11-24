@@ -226,11 +226,11 @@ class CiscoTorBlock():
             # add/remove new IPs to block
             print "Adding rules..."
             for ip in toadd:
-                conn.execute("permit ip host " + ip + " any")
+                conn.execute("permit ip host %s any" % ip)
 
             print "Removing rules..."
             for no in todel:
-                conn.execute("no " + no)
+                conn.execute("no %s" % no)
 
             conn.execute("end")
 
