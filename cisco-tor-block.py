@@ -38,6 +38,16 @@ config = {
         "logfile": None,       # file to log comm or None
         "connect_timeout": 60  # timeout in seconds
     },
+    "commands": {
+        "show": "do show ip access-lists tor-block",  # used to fetch the access list
+        "extend": "ip access-list extended tor-block",  # used to extend showed access list
+        "add": "permit ip host %s any",  # adds rule, %s is replaced with IP
+        "del": "no %s"  # removes rule, %s is replaced with rule number
+    },
+    "regexp": {
+        "ipmatch": "ExitAddress (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})",  # extracts IPs, remove first part if using other lists. Keep parenthesis.
+        "showmatch": "(\d+) permit ip host (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) any"  # extracts rule number and IP. Keep parenthesis.
+    },
     "whitelist": [],                                          # whitelist networks in net/mask format, eg. 127.0.0.1/8
     "ea_url": "https://check.torproject.org/exit-addresses",  # "official" exit nodes service
     "ea_file": "exit-addresses.txt"                           # reslut from check, must be writable
@@ -117,7 +127,7 @@ class CiscoTorBlock():
         """ Dumb regexp IP extractor and cleaner """
 
         # Extract all IP addresses
-        ipPattern = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
+        ipPattern = re.compile(self.conf["regexp"]["ipmatch"])
         findIP = re.findall(ipPattern, self.ea_list)
         findIP = set(findIP)
 
@@ -144,7 +154,7 @@ class CiscoTorBlock():
             return [aa for aa in a if aa not in b]
 
         # extract all IP addresses
-        ipPattern = re.compile("(\d+) permit ip host (\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) any")
+        ipPattern = re.compile(self.conf["regexp"]["showmatch"])
         findIP = re.findall(ipPattern, cisco_list)
         rulesLen = len(findIP)
         print "Rules found: %d" % rulesLen
@@ -212,7 +222,7 @@ class CiscoTorBlock():
 
             print "Pulling current access list..."
             conn.execute("conf t")
-            conn.execute("do show ip access-lists tor-block")
+            conn.execute(self.conf["commands"]["show"])
 
             toadd, todel = self.parse_cisco_list(conn.response, iplist)
 
@@ -221,16 +231,16 @@ class CiscoTorBlock():
                 self.write_ea()
                 exit(0)
 
-            conn.execute("ip access-list extended tor-block")
+            conn.execute(self.conf["commands"]["extend"])
 
             # add/remove new IPs to block
             print "Adding rules..."
             for ip in toadd:
-                conn.execute("permit ip host %s any" % ip)
+                conn.execute(self.conf["commands"]["add"] % ip)
 
             print "Removing rules..."
             for no in todel:
-                conn.execute("no %s" % no)
+                conn.execute(self.conf["commands"]["del"] % no)
 
             conn.execute("end")
 
